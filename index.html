@@ -3,31 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>המעקב הפיננסי של בינגוס ותותי</title>
+<title>המעקב הפיננסי של בינגוס ותותי 🐱</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#0f172a;
-    --card:#ffffff;
-    --ink:#0f172a;
-    --muted:#64748b;
-    --line:#e2e8f0;
-    --brand:#6366f1;
-    --brand2:#8b5cf6;
-    --green:#10b981;
-    --amber:#f59e0b;
-    --red:#ef4444;
-    --sky:#0ea5e9;
+    --bg:#0f172a; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --brand:#6366f1; --brand2:#8b5cf6; --green:#10b981; --amber:#f59e0b; --red:#ef4444; --sky:#0ea5e9;
     --shadow:0 10px 30px -12px rgba(15,23,42,.18);
   }
   *{box-sizing:border-box}
   body{
     margin:0;font-family:'Heebo',system-ui,Arial,sans-serif;color:var(--ink);
     background:radial-gradient(1200px 600px at 100% -10%,#eef2ff 0%,transparent 55%),
-               radial-gradient(1000px 600px at 0% 0%,#f5f3ff 0%,transparent 50%),
-               #f6f7fb;
+               radial-gradient(1000px 600px at 0% 0%,#f5f3ff 0%,transparent 50%),#f6f7fb;
     min-height:100vh;
   }
   .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
@@ -39,10 +29,12 @@
   .top h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.3px}
   .top .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);
-    border:1px solid rgba(255,255,255,.28);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:500}
-  .dot{width:8px;height:8px;border-radius:50%;background:#cbd5e1}
+    border:1px solid rgba(255,255,255,.28);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:500;max-width:340px}
+  .badge span#statusText{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dot{width:8px;height:8px;border-radius:50%;background:#cbd5e1;flex:0 0 auto}
   .dot.live{background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.25)}
   .dot.local{background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,.25)}
+  .dot.err{background:#f87171;box-shadow:0 0 0 4px rgba(248,113,113,.25)}
   button.refresh{
     background:#fff;color:var(--brand);border:none;padding:9px 16px;border-radius:999px;
     font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:.15s;
@@ -97,9 +89,7 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div>
-      <h1>המעקב הפיננסי של בינגוס ותותי</h1>
-    </div>
+    <div><h1>המעקב הפיננסי של בינגוס ותותי 🐱</h1></div>
     <div class="right">
       <span class="badge"><span class="dot" id="statusDot"></span><span id="statusText">טוען…</span></span>
       <button class="refresh" id="refreshBtn">רענן מהגיליון</button>
@@ -118,28 +108,15 @@
     </div>
   </div>
 
-  <!-- KPIs -->
   <section class="kpis" id="kpis"></section>
-
-  <!-- Shared: budget tables -->
   <section id="budgetSection" class="budget-grid"></section>
 
-  <!-- Personal: charts + table -->
   <section id="chartsSection" class="hidden">
     <div class="grid2">
-      <div class="panel">
-        <h3>צמיחת הון לאורך זמן</h3>
-        <div class="chartbox"><canvas id="growthChart"></canvas></div>
-      </div>
-      <div class="panel">
-        <h3>התפלגות נכסים לפי טווח</h3>
-        <div class="chartbox"><canvas id="distChart"></canvas></div>
-      </div>
+      <div class="panel"><h3>צמיחת הון לאורך זמן</h3><div class="chartbox"><canvas id="growthChart"></canvas></div></div>
+      <div class="panel"><h3>התפלגות נכסים לפי טווח</h3><div class="chartbox"><canvas id="distChart"></canvas></div></div>
     </div>
-    <div class="panel" style="margin-top:16px">
-      <h3>פירוט חשבונות</h3>
-      <table id="accTable"></table>
-    </div>
+    <div class="panel" style="margin-top:16px"><h3>פירוט חשבונות</h3><table id="accTable"></table></div>
   </section>
 
   <div class="foot" id="foot"></div>
@@ -147,22 +124,34 @@
 
 <script>
 /* ============================================================
-   המעקב הפיננסי של בינגוס ותותי — דשבורד משפחתי
-   מקור נתונים: Google Sheets (עדכון חי) + גיבוי מוטמע
+   המעקב הפיננסי של בינגוס ותותי 🐱
+   מקור נתונים: Google Sheets (עדכון חי, כל 60 שניות) + גיבוי מוטמע
    ============================================================ */
 
 const SHEET_ID = "1uMRdTfbFMUR1fQoYdFOyq2Nu5WFjo_1_29weQG3c-Zc";
-const HOUSEHOLD_MONTHLY_EXPENSE = 8085 + 7500; // קבועות + משתנות = 15,585
+const TAB_GUY = "גיא", TAB_YAEL = "יעל", TAB_BUDGET = "תקציב משותף";
+const POLL_MS = 60000;
 
-/* ---------- חודשים (Excel serial) ---------- */
+/* ---------- עזרי תאריך ---------- */
 const HEB_M = ['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
 function serialToDate(s){ return new Date(Date.UTC(1899,11,30) + s*86400000); }
-function monthLabel(s){ const d=serialToDate(s); return HEB_M[d.getUTCMonth()]+"׳ "+String(d.getUTCFullYear()).slice(2); }
+function serialLabel(s){ const d=serialToDate(s); return HEB_M[d.getUTCMonth()]+"׳ "+String(d.getUTCFullYear()).slice(2); }
+function parseSerial(raw){
+  const s=String(raw).trim();
+  const n=Number(s.replace(/,/g,''));
+  if(!isNaN(n)&&n>=30000&&n<=80000) return Math.round(n);                 // Excel serial
+  let m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/);           // dd/mm/yyyy (IL)
+  if(m){ let day=+m[1],mon=+m[2],yr=+m[3]; if(yr<100)yr+=2000;
+    return Math.round((Date.UTC(yr,mon-1,day)-Date.UTC(1899,11,30))/86400000); }
+  m=s.match(/^(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})$/);                 // yyyy-mm-dd
+  if(m) return Math.round((Date.UTC(+m[1],+m[2]-1,+m[3])-Date.UTC(1899,11,30))/86400000);
+  return null;
+}
+function labelFor(raw){ const s=parseSerial(raw); return s!=null ? serialLabel(s) : String(raw).trim(); }
+function num(v){ const n=Number(String(v).replace(/[₪,\s]/g,'')); return isNaN(n)?0:n; }
 
-let MONTHS = [46022,46053,46081,46112,46142,46173,46203];
-
-/* ---------- נתונים מוטמעים (גיבוי / ברירת מחדל) ---------- */
-/* לכל אדם: sections לפי טווח + התחייבויות, כל חשבון עם ערכים לכל חודש (בהתאמה ל-MONTHS) */
+/* ---------- נתונים מוטמעים (גיבוי) ---------- */
+const EMBEDDED_LABELS = [46022,46053,46081,46112,46142,46173,46203].map(serialLabel);
 const EMBEDDED = {
   guy:{
     short:[
@@ -203,7 +192,6 @@ const EMBEDDED = {
     liab:[],
   },
 };
-
 const EMBEDDED_BUDGET = [
   {title:'הכנסות', rows:[
     ['משכורת EY - גיא',9200],['משכורת עיריית תל אביב - יעל',9600],['משכורת בית אבי-חי - יעל',1300],
@@ -211,196 +199,147 @@ const EMBEDDED_BUDGET = [
   {title:'הוצאות - קבועות', rows:[
     ['שכר דירה',6500],['אימונים',300],['תחבורה ציבורית',300],['חשמל',200],['טיפוח',250],
     ['ועד בית',195],['מים',110],['אינטרנט',105],['גז',65],['ארנונה',60]]},
-  {title:'הוצאות - משתנות', rows:[
-    ['יציאות',2500],['סופר',1500],['בלת"מ',1500],['קניות',2000]]},
+  {title:'הוצאות - משתנות', rows:[['יציאות',2500],['סופר',1500],['בלת"מ',1500],['קניות',2000]]},
   {title:'חיסכון/השקעה', rows:[
     ['חיסכון כללי - יעל',1200],['חיסכון כללי - גיא',2000],['קופת גמל להשקעה - יעל',2000],
     ['קופת גמל להשקעה - גיא',1200],['יתרה',315]]},
 ];
 
-/* מודל עבודה חי — מאותחל מהמוטמע */
+/* ---------- מצב עבודה ---------- */
 let DATA = JSON.parse(JSON.stringify(EMBEDDED));
 let BUDGET = JSON.parse(JSON.stringify(EMBEDDED_BUDGET));
+let LABELS = EMBEDDED_LABELS.slice();
 let currentView = 'shared';
-let selIdx = MONTHS.length - 1;
+let selIdx = LABELS.length - 1;
 
-/* ---------- עזרי חישוב ---------- */
+/* ---------- חישוב ---------- */
 const nis = n => '₪' + Math.round(n).toLocaleString('he-IL');
 const pct = n => (n*100).toFixed(1).replace('.',',') + '%';
-
+function householdExpense(){
+  const t = name => (BUDGET.find(b=>b.title===name)||{rows:[]}).rows.reduce((a,r)=>a+r[1],0);
+  return (t('הוצאות - קבועות') + t('הוצאות - משתנות')) || 15585;
+}
 function rangeTotals(person, idx){
   const sum = arr => (arr||[]).reduce((a,r)=>a+(r.v[idx]||0),0);
-  const s = sum(DATA[person].short), m = sum(DATA[person].medium), l = sum(DATA[person].long);
-  const liab = sum(DATA[person].liab);
-  const assets = s+m+l;
-  return {short:s, medium:m, long:l, liab:liab, liquid:s+m, nonLiquid:l, assets:assets, total:assets-liab};
+  const s=sum(DATA[person].short), m=sum(DATA[person].medium), l=sum(DATA[person].long), liab=sum(DATA[person].liab);
+  const assets=s+m+l;
+  return {short:s,medium:m,long:l,liab,liquid:s+m,nonLiquid:l,assets,total:assets-liab};
 }
 function combinedTotals(idx){
   const g=rangeTotals('guy',idx), y=rangeTotals('yael',idx);
-  const add=(a,b)=>({short:a.short+b.short,medium:a.medium+b.medium,long:a.long+b.long,liab:a.liab+b.liab,
-                     liquid:a.liquid+b.liquid,nonLiquid:a.nonLiquid+b.nonLiquid,assets:a.assets+b.assets,total:a.total+b.total});
-  return add(g,y);
+  const k=['short','medium','long','liab','liquid','nonLiquid','assets','total'];
+  const o={}; k.forEach(x=>o[x]=g[x]+y[x]); return o;
 }
-function totalsFor(view, idx){
-  return view==='shared' ? combinedTotals(idx) : rangeTotals(view, idx);
-}
-function seriesFor(view){
-  if(view==='shared') return MONTHS.map((_,i)=>combinedTotals(i).total);
-  return MONTHS.map((_,i)=>rangeTotals(view,i).total);
-}
+const totalsFor = (view,idx)=> view==='shared'?combinedTotals(idx):rangeTotals(view,idx);
+const seriesFor = view => LABELS.map((_,i)=> view==='shared'?combinedTotals(i).total:rangeTotals(view,i).total);
 
-/* ---------- רינדור KPIs ---------- */
+/* ---------- KPIs ---------- */
 function renderKPIs(){
-  const t = totalsFor(currentView, selIdx);
-  const series = seriesFor(currentView);
-  const base = series[0];
-  const changeAbs = t.total - base;
-  const growthPct = base ? changeAbs/base : 0;
-  const avgMonthly = selIdx>0 ? changeAbs/selIdx : 0;
-  const liq = t.total ? t.liquid/t.total : 0;
-  const expense = currentView==='shared' ? HOUSEHOLD_MONTHLY_EXPENSE : HOUSEHOLD_MONTHLY_EXPENSE/2;
-  const emergency = expense ? t.short/expense : 0;
-  const up = changeAbs>=0;
-
-  const cards = [
-    {c:'k1', lbl:'הון כולל', val:nis(t.total),
+  const t=totalsFor(currentView,selIdx), series=seriesFor(currentView), base=series[0];
+  const changeAbs=t.total-base, growthPct=base?changeAbs/base:0, avgMonthly=selIdx>0?changeAbs/selIdx:0;
+  const liq=t.total?t.liquid/t.total:0;
+  const expense=currentView==='shared'?householdExpense():householdExpense()/2;
+  const emergency=expense?t.short/expense:0, up=changeAbs>=0;
+  const cards=[
+    {c:'k1',lbl:'הון כולל',val:nis(t.total),
      sub:`שינוי מ‑31/12/2025: ${nis(changeAbs)} <span class="chip ${up?'up':'down'}">${up?'▲':'▼'} ${pct(growthPct)}</span><br>בסיס: ${nis(base)}`},
-    {c:'k2', lbl:'הון נזיל', val:nis(t.liquid),
-     sub:`שיעור נזילות: ${pct(liq)}`},
-    {c:'k3', lbl:'הון לא נזיל', val:nis(t.nonLiquid),
-     sub:`פנסיה, גמל והשתלמות`},
-    {c:'k4', lbl:'התחייבויות', val:nis(t.liab),
-     sub:`הלוואות והתחייבויות אחרות`},
-    {c:'k5', lbl:'שינוי חודשי ממוצע', val:nis(avgMonthly),
-     sub:`על פני ${selIdx} חודשים`},
-    {c:'k6', lbl:'חודשי כיסוי חירום', val:emergency.toFixed(1).replace('.',',')+' חודשים',
+    {c:'k2',lbl:'הון נזיל',val:nis(t.liquid),sub:`שיעור נזילות: ${pct(liq)}`},
+    {c:'k3',lbl:'הון לא נזיל',val:nis(t.nonLiquid),sub:'פנסיה, גמל והשתלמות'},
+    {c:'k4',lbl:'התחייבויות',val:nis(t.liab),sub:'הלוואות והתחייבויות אחרות'},
+    {c:'k5',lbl:'שינוי חודשי ממוצע',val:nis(avgMonthly),sub:`על פני ${selIdx} חודשים`},
+    {c:'k6',lbl:'חודשי כיסוי חירום',val:emergency.toFixed(1)+' חודשים',
      sub:`טווח קצר: ${nis(t.short)} · הוצאה: ${nis(expense)}`},
   ];
-  document.getElementById('kpis').innerHTML = cards.map(k=>`
-    <div class="kpi ${k.c}">
-      <div class="lbl">${k.lbl}</div>
-      <div class="val">${k.val}</div>
-      <div class="sub">${k.sub}</div>
-    </div>`).join('');
+  document.getElementById('kpis').innerHTML=cards.map(k=>`
+    <div class="kpi ${k.c}"><div class="lbl">${k.lbl}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`).join('');
 }
 
-/* ---------- רינדור טבלאות תקציב (משותף) — ממוין לפי גודל בכל באקט ---------- */
+/* ---------- טבלאות תקציב (משותף) — ממוין יורד לפי גודל ---------- */
 function renderBudget(){
   document.getElementById('budgetSection').innerHTML = BUDGET.slice(0,4).map(tbl=>{
-    const total = tbl.rows.reduce((a,r)=>a+r[1],0);
-    const sorted = tbl.rows.slice().sort((a,b)=>b[1]-a[1]); // מיון יורד לפי סכום
-    const body = sorted.map(r=>`
-      <tr><td>${r[0]}</td>
-          <td class="num">${nis(r[1])}</td>
-          <td class="pct">${pct(total?r[1]/total:0)}</td></tr>`).join('');
-    return `<div class="panel">
-      <h3>${tbl.title}</h3>
-      <table>
-        <thead><tr><th>שם החשבון</th><th>סכום</th><th>אחוז</th></tr></thead>
-        <tbody>${body}
-          <tr class="total"><td>סה"כ ${tbl.title}</td><td class="num">${nis(total)}</td><td class="pct">100,0%</td></tr>
-        </tbody>
-      </table></div>`;
+    const total=tbl.rows.reduce((a,r)=>a+r[1],0);
+    const sorted=tbl.rows.slice().sort((a,b)=>b[1]-a[1]);
+    const body=sorted.map(r=>`<tr><td>${r[0]}</td><td class="num">${nis(r[1])}</td><td class="pct">${pct(total?r[1]/total:0)}</td></tr>`).join('');
+    return `<div class="panel"><h3>${tbl.title}</h3>
+      <table><thead><tr><th>שם החשבון</th><th>סכום</th><th>אחוז</th></tr></thead>
+      <tbody>${body}<tr class="total"><td>סה"כ ${tbl.title}</td><td class="num">${nis(total)}</td><td class="pct">100,0%</td></tr></tbody></table></div>`;
   }).join('');
 }
 
 /* ---------- גרפים ---------- */
 let growthChart=null, distChart=null;
 function renderCharts(){
-  const person = currentView;
-  const series = MONTHS.map((_,i)=>rangeTotals(person,i).total);
-  const labels = MONTHS.map(monthLabel);
-  const t = rangeTotals(person, selIdx);
-
-  const gctx = document.getElementById('growthChart');
+  const person=currentView, series=LABELS.map((_,i)=>rangeTotals(person,i).total), t=rangeTotals(person,selIdx);
+  const gctx=document.getElementById('growthChart');
   if(growthChart) growthChart.destroy();
-  growthChart = new Chart(gctx,{
-    type:'line',
-    data:{labels,datasets:[{
-      label:'הון כולל', data:series, tension:.35, fill:true,
-      borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,.12)',
-      pointBackgroundColor:'#6366f1', pointRadius:series.map((_,i)=>i===selIdx?6:3),
-      borderWidth:3
-    }]},
+  growthChart=new Chart(gctx,{type:'line',
+    data:{labels:LABELS,datasets:[{label:'הון כולל',data:series,tension:.35,fill:true,
+      borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.12)',pointBackgroundColor:'#6366f1',
+      pointRadius:series.map((_,i)=>i===selIdx?6:3),borderWidth:3}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>nis(c.parsed.y)}}},
-      scales:{y:{ticks:{callback:v=>'₪'+(v/1000).toFixed(0)+'K'},grid:{color:'#eef2f7'}},
-              x:{grid:{display:false}}}}
-  });
-
-  const dctx = document.getElementById('distChart');
+      scales:{y:{ticks:{callback:v=>'₪'+(v/1000).toFixed(0)+'K'},grid:{color:'#eef2f7'}},x:{grid:{display:false}}}}});
+  const dctx=document.getElementById('distChart');
   if(distChart) distChart.destroy();
-  distChart = new Chart(dctx,{
-    type:'doughnut',
-    data:{labels:['טווח קצר','טווח בינוני','טווח ארוך'],
-      datasets:[{data:[t.short,t.medium,t.long],
-        backgroundColor:['#0ea5e9','#8b5cf6','#f59e0b'],borderWidth:2,borderColor:'#fff'}]},
+  distChart=new Chart(dctx,{type:'doughnut',
+    data:{labels:['טווח קצר','טווח בינוני','טווח ארוך'],datasets:[{data:[t.short,t.medium,t.long],
+      backgroundColor:['#0ea5e9','#8b5cf6','#f59e0b'],borderWidth:2,borderColor:'#fff'}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
       plugins:{legend:{position:'bottom',labels:{font:{family:'Heebo',size:13}}},
-        tooltip:{callbacks:{label:c=>c.label+': '+nis(c.parsed)+' ('+pct(c.parsed/(t.short+t.medium+t.long))+')'}}}}
-  });
+        tooltip:{callbacks:{label:c=>c.label+': '+nis(c.parsed)+' ('+pct(c.parsed/((t.short+t.medium+t.long)||1))+')'}}}}});
 }
 
-/* ---------- טבלת פירוט חשבונות (אישי) ---------- */
+/* ---------- פירוט חשבונות (אישי) — ללא שורת סה"כ הון ---------- */
 function renderAccounts(){
-  const person = currentView;
-  const t = rangeTotals(person, selIdx);
-  const grand = t.assets || 1;
-  const sectionRows = (title, arr, subtotal) => {
-    const rows = (arr||[]).map(r=>`<tr>
-        <td>${r.name}</td>
-        <td class="num">${nis(r.v[selIdx]||0)}</td>
-        <td class="pct">${pct((r.v[selIdx]||0)/grand)}</td></tr>`).join('');
+  const person=currentView, t=rangeTotals(person,selIdx), grand=t.assets||1;
+  const sec=(title,arr,subtotal)=>{
+    const rows=(arr||[]).map(r=>`<tr><td>${r.name}</td><td class="num">${nis(r.v[selIdx]||0)}</td><td class="pct">${pct((r.v[selIdx]||0)/grand)}</td></tr>`).join('');
     return `<tr class="section"><td colspan="3">${title}</td></tr>${rows}
       <tr class="total"><td>סה"כ ${title}</td><td class="num">${nis(subtotal)}</td><td class="pct">${pct(subtotal/grand)}</td></tr>`;
   };
-  document.getElementById('accTable').innerHTML = `
+  document.getElementById('accTable').innerHTML=`
     <thead><tr><th>שם החשבון</th><th>יתרה</th><th>% מסך הנכסים</th></tr></thead>
     <tbody>
-      ${sectionRows('נכסים - טווח קצר',   DATA[person].short,  t.short)}
-      ${sectionRows('נכסים - טווח בינוני', DATA[person].medium, t.medium)}
-      ${sectionRows('נכסים - טווח ארוך',   DATA[person].long,   t.long)}
+      ${sec('נכסים - טווח קצר',DATA[person].short,t.short)}
+      ${sec('נכסים - טווח בינוני',DATA[person].medium,t.medium)}
+      ${sec('נכסים - טווח ארוך',DATA[person].long,t.long)}
     </tbody>`;
 }
 
 /* ---------- רינדור ראשי ---------- */
 function render(){
+  if(selIdx>LABELS.length-1) selIdx=LABELS.length-1;
   renderKPIs();
-  const isShared = currentView==='shared';
-  document.getElementById('budgetSection').classList.toggle('hidden', !isShared);
-  document.getElementById('chartsSection').classList.toggle('hidden', isShared);
-  if(isShared) renderBudget();
-  else { renderCharts(); renderAccounts(); }
-  document.getElementById('foot').innerHTML =
-    `נכון ל‑${monthLabel(MONTHS[selIdx])} · הדשבורד המשותף מחושב כסכום גיא + יעל · מקור: Google Sheets`;
+  const isShared=currentView==='shared';
+  document.getElementById('budgetSection').classList.toggle('hidden',!isShared);
+  document.getElementById('chartsSection').classList.toggle('hidden',isShared);
+  if(isShared) renderBudget(); else { renderCharts(); renderAccounts(); }
+  document.getElementById('foot').innerHTML=
+    `נכון ל‑${LABELS[selIdx]} · הדשבורד המשותף מחושב כסכום גיא + יעל · מקור: Google Sheets`;
 }
-
-/* ---------- בורר תאריך ---------- */
 function buildMonthSelect(){
-  const sel = document.getElementById('monthSel');
-  sel.innerHTML = MONTHS.map((s,i)=>`<option value="${i}" ${i===selIdx?'selected':''}>${monthLabel(s)}</option>`).join('');
+  document.getElementById('monthSel').innerHTML=
+    LABELS.map((lbl,i)=>`<option value="${i}" ${i===selIdx?'selected':''}>${lbl}</option>`).join('');
 }
 
 /* ---------- אירועים ---------- */
-document.getElementById('tabs').addEventListener('click', e=>{
+document.getElementById('tabs').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('active'));
   b.classList.add('active'); currentView=b.dataset.view; render();
 });
-document.getElementById('monthSel').addEventListener('change', e=>{ selIdx=+e.target.value; render(); });
-document.getElementById('refreshBtn').addEventListener('click', ()=>loadLive(true));
+document.getElementById('monthSel').addEventListener('change',e=>{selIdx=+e.target.value; render();});
+document.getElementById('refreshBtn').addEventListener('click',()=>loadLive(true));
 
 /* ============================================================
-   עדכון חי מ‑Google Sheets (gviz CSV)
-   דורש שיתוף הגיליון כ"כל מי שיש לו קישור — צופה"
+   סנכרון חי מ‑Google Sheets דרך gviz CSV
    ============================================================ */
 function setStatus(state,msg){
   const dot=document.getElementById('statusDot'), txt=document.getElementById('statusText');
-  dot.className='dot '+(state==='live'?'live':state==='local'?'local':'');
-  txt.textContent=msg;
+  dot.className='dot '+(state||''); txt.textContent=msg; txt.title=msg;
 }
 function gvizURL(sheetName){
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&headers=0&t=${Date.now()}`;
 }
 function parseCSV(text){
   const rows=[];let row=[],cur='',q=false;
@@ -413,116 +352,96 @@ function parseCSV(text){
   if(cur!==''||row.length){row.push(cur);rows.push(row);}
   return rows;
 }
-function looksLikeDate(v){
-  if(v==null) return null;
-  const s=String(v).trim();
-  const n=Number(s.replace(/,/g,''));
-  if(!isNaN(n)&&n>=40000&&n<=60000) return Math.round(n);           // serial
-  const d=new Date(s); if(!isNaN(d.getTime())&&d.getFullYear()>2015&&d.getFullYear()<2100){
-    return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/86400000);
-  }
-  return null;
-}
-function num(v){ const n=Number(String(v).replace(/[₪,\s]/g,'')); return isNaN(n)?0:n; }
 
-/* מוצא את בלוק עמודות התאריכים הרציף הארוך ביותר בשורת הכותרת */
-function detectMonthCols(headerRow){
-  let best=[],cur=[];
-  headerRow.forEach((cell,idx)=>{
-    const s=looksLikeDate(cell);
-    if(s!==null){cur.push({idx,serial:s});}
-    else{ if(cur.length>best.length)best=cur; cur=[]; }
-  });
-  if(cur.length>best.length)best=cur;
-  return best;
-}
+/* פרסור טאב אישי — זיהוי עמודות לפי כל תא לא-ריק בשורת "שם החשבון" */
 function parsePerson(rows){
-  // מצא שורת כותרת עם "שם החשבון"
   let hr=-1,nameCol=-1;
   for(let r=0;r<rows.length;r++){
     const c=rows[r].findIndex(x=>String(x).includes('שם החשבון'));
     if(c>=0){hr=r;nameCol=c;break;}
   }
-  if(hr<0) throw new Error('no header');
-  const monthCols=detectMonthCols(rows[hr]);
-  if(monthCols.length<2) throw new Error('no month cols');
-  const months=monthCols.map(m=>m.serial);
+  if(hr<0) throw new Error('לא נמצאה שורת כותרת "שם החשבון"');
+  const header=rows[hr], monthCols=[];
+  for(let c=nameCol+1;c<header.length;c++){
+    const cell=String(header[c]).trim();
+    if(cell!=='') monthCols.push({idx:c,label:labelFor(cell)});
+  }
+  if(!monthCols.length) throw new Error('לא נמצאו עמודות חודשים בכותרת');
+  const labels=monthCols.map(m=>m.label);
   const sections={short:[],medium:[],long:[],liab:[]};
   let cur=null;
   for(let r=hr+1;r<rows.length;r++){
-    const row=rows[r]; const name=String(row[nameCol]||'').trim();
-    if(!name) continue;
-    if(name.includes('טווח קצר') && !name.includes('סה')){cur='short';continue;}
-    if(name.includes('טווח בינוני') && !name.includes('סה')){cur='medium';continue;}
-    if(name.includes('טווח ארוך') && !name.includes('סה')){cur='long';continue;}
-    if(name.includes('התחייבויות') && !name.includes('סה')){cur='liab';continue;}
-    if(name.includes('סה"כ')||name.includes('שינוי')||name.includes('שיעור')||
-       name.includes('חודש')||name.includes('סך')) continue;
+    const name=String(rows[r][nameCol]||'').trim(); if(!name) continue;
+    if(name.includes('טווח קצר')&&!name.includes('סה')){cur='short';continue;}
+    if(name.includes('טווח בינוני')&&!name.includes('סה')){cur='medium';continue;}
+    if(name.includes('טווח ארוך')&&!name.includes('סה')){cur='long';continue;}
+    if(name.includes('התחייבויות')&&!name.includes('סה')){cur='liab';continue;}
+    if(name.includes('סה"כ')||name.includes('שינוי')||name.includes('שיעור')||name.includes('חודש')||name.includes('סך ')) continue;
     if(!cur) continue;
-    const v=monthCols.map(m=>num(row[m.idx]));
-    sections[cur].push({name,v});
+    sections[cur].push({name, v:monthCols.map(m=>num(rows[r][m.idx]))});
   }
-  if(!sections.short.length && !sections.long.length) throw new Error('empty');
-  return {months,sections};
+  if(!sections.short.length && !sections.long.length && !sections.medium.length) throw new Error('לא זוהו חשבונות');
+  return {labels,sections};
 }
+
+/* פרסור טאב תקציב — ארבעה בלוקים דינמיים */
 function parseBudget(rows){
   const titles=['הכנסות','הוצאות - קבועות','הוצאות - משתנות','חיסכון/השקעה'];
-  const out=[];
-  const flat=rows.map(r=>r.map(c=>String(c).trim()));
+  const flat=rows.map(r=>r.map(c=>String(c).trim())), out=[];
   for(const title of titles){
     let start=-1;
     for(let r=0;r<flat.length;r++){ if(flat[r].some(c=>c===title)){start=r;break;} }
     if(start<0){out.push(null);continue;}
     const block={title,rows:[]};
     for(let r=start+1;r<flat.length;r++){
-      const cells=flat[r];
-      const joined=cells.join('');
-      if(joined.includes('סה"כ')) break;
-      let nameIdx=cells.findIndex(c=>/[א-ת]/.test(c)&&!/^\d/.test(c)&&c.length>1);
+      const cells=flat[r]; if(cells.join('').includes('סה"כ')) break;
+      const nameIdx=cells.findIndex(c=>/[א-ת]/.test(c)&&!/^\d/.test(c)&&c.length>1);
       if(nameIdx<0) continue;
-      const nm=cells[nameIdx];
-      if(titles.includes(nm)) continue;
-      let amt=0;
-      for(let k=0;k<cells.length;k++){ const n=num(cells[k]); if(n>=1&&k!==nameIdx){amt=n;break;} }
+      const nm=cells[nameIdx]; if(titles.includes(nm)) continue;
+      let amt=0; for(let k=0;k<cells.length;k++){ const n=num(cells[k]); if(n>=1&&k!==nameIdx){amt=n;break;} }
       if(nm&&amt>0) block.rows.push([nm,amt]);
     }
     out.push(block.rows.length?block:null);
   }
-  return out.every(b=>b) ? out : null;
+  return out.every(b=>b)?out:null;
 }
 
 async function fetchSheet(name){
-  const res=await fetch(gvizURL(name),{cache:'no-store'});
-  if(!res.ok) throw new Error('http '+res.status);
-  return parseCSV(await res.text());
+  let res;
+  try{ res=await fetch(gvizURL(name),{cache:'no-store'}); }
+  catch(e){ throw new Error('החיבור נחסם (CORS) — ודא שהגיליון משותף כ"כל מי שיש לו קישור → צופה"'); }
+  if(!res.ok) throw new Error('שגיאת HTTP '+res.status+' בעת קריאת הטאב "'+name+'"');
+  const txt=await res.text();
+  if(/^\s*</.test(txt)) throw new Error('גוגל החזיר דף התחברות — הגיליון כנראה אינו משותף לצפייה ציבורית');
+  return parseCSV(txt);
 }
 
 async function loadLive(userTriggered){
   const btn=document.getElementById('refreshBtn');
   btn.disabled=true; setStatus('','מסנכרן…');
   try{
-    const [guyRows,yaelRows]=await Promise.all([fetchSheet('גיא'),fetchSheet('יעל')]);
+    const [guyRows,yaelRows]=await Promise.all([fetchSheet(TAB_GUY),fetchSheet(TAB_YAEL)]);
     const guy=parsePerson(guyRows), yael=parsePerson(yaelRows);
-    DATA={guy:guy.sections, yael:yael.sections};
-    MONTHS=guy.months;
-    selIdx=MONTHS.length-1;
-    try{ const bRows=await fetchSheet('תקציב משותף'); const b=parseBudget(bRows); if(b) BUDGET=b; }catch(_){}
+    const n=Math.min(guy.labels.length,yael.labels.length);
+    const clamp=sec=>{const o={};for(const k in sec)o[k]=sec[k].map(a=>({name:a.name,v:a.v.slice(0,n)}));return o;};
+    DATA={guy:clamp(guy.sections),yael:clamp(yael.sections)};
+    LABELS=guy.labels.slice(0,n);
+    selIdx=LABELS.length-1;
+    try{ const b=parseBudget(await fetchSheet(TAB_BUDGET)); if(b) BUDGET=b; }catch(_){}
     buildMonthSelect(); render();
-    setStatus('live','עודכן מהגיליון · '+new Date().toLocaleTimeString('he-IL'));
+    setStatus('live','מסונכרן מהגיליון · '+new Date().toLocaleTimeString('he-IL'));
   }catch(err){
     DATA=JSON.parse(JSON.stringify(EMBEDDED));
     BUDGET=JSON.parse(JSON.stringify(EMBEDDED_BUDGET));
-    MONTHS=[46022,46053,46081,46112,46142,46173,46203];
-    selIdx=MONTHS.length-1;
+    LABELS=EMBEDDED_LABELS.slice(); selIdx=LABELS.length-1;
     buildMonthSelect(); render();
-    setStatus('local','מוצג מנתונים מוטמעים'+(userTriggered?' · הסנכרון נכשל (בדוק הרשאות שיתוף)':''));
+    setStatus(userTriggered?'err':'local',(userTriggered?'הסנכרון נכשל: ':'נתונים מוטמעים · ')+(err.message||err));
   }finally{ btn.disabled=false; }
 }
 
-/* ---------- אתחול ---------- */
-buildMonthSelect();
-render();
-loadLive(false);
+/* ---------- אתחול + סנכרון אוטומטי ---------- */
+buildMonthSelect(); render(); loadLive(false);
+setInterval(()=>loadLive(false), POLL_MS);
 </script>
 </body>
 </html>
