@@ -223,7 +223,7 @@ function rangeTotals(person, idx){
   const sum = arr => (arr||[]).reduce((a,r)=>a+(r.v[idx]||0),0);
   const s=sum(DATA[person].short), m=sum(DATA[person].medium), l=sum(DATA[person].long), liab=sum(DATA[person].liab);
   const assets=s+m+l;
-  return {short:s,medium:m,long:l,liab,liquid:s+m,nonLiquid:l,assets,total:assets-liab};
+  return {short:s,medium:m,long:l,liab,liquid:s+m,nonLiquid:l,assets,total:assets+liab};
 }
 function combinedTotals(idx){
   const g=rangeTotals('guy',idx), y=rangeTotals('yael',idx);
@@ -292,8 +292,11 @@ function renderCharts(){
 /* ---------- פירוט חשבונות (אישי) — ללא שורת סה"כ הון ---------- */
 function renderAccounts(){
   const person=currentView, t=rangeTotals(person,selIdx), grand=t.assets||1;
+  // מציג רק חשבונות עם ערך בחודש הנבחר; סעיף מוצג רק אם נותר בו לפחות חשבון אחד
   const sec=(title,arr,subtotal)=>{
-    const rows=(arr||[]).map(r=>`<tr><td>${r.name}</td><td class="num">${nis(r.v[selIdx]||0)}</td><td class="pct">${pct((r.v[selIdx]||0)/grand)}</td></tr>`).join('');
+    const live=(arr||[]).filter(r=>(r.v[selIdx]||0)!==0);
+    if(!live.length) return '';
+    const rows=live.map(r=>`<tr><td>${r.name}</td><td class="num">${nis(r.v[selIdx]||0)}</td><td class="pct">${pct((r.v[selIdx]||0)/grand)}</td></tr>`).join('');
     return `<tr class="section"><td colspan="3">${title}</td></tr>${rows}
       <tr class="total"><td>סה"כ ${title}</td><td class="num">${nis(subtotal)}</td><td class="pct">${pct(subtotal/grand)}</td></tr>`;
   };
@@ -303,6 +306,7 @@ function renderAccounts(){
       ${sec('נכסים - טווח קצר',DATA[person].short,t.short)}
       ${sec('נכסים - טווח בינוני',DATA[person].medium,t.medium)}
       ${sec('נכסים - טווח ארוך',DATA[person].long,t.long)}
+      ${sec('התחייבויות',DATA[person].liab,t.liab)}
     </tbody>`;
 }
 
