@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>מעקב פיננסי · דשבורד משפחתי</title>
+<title>המעקב הפיננסי של בינגוס ותותי</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -37,7 +37,6 @@
     display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;
   }
   .top h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.3px}
-  .top p{margin:4px 0 0;opacity:.9;font-size:13px;font-weight:400}
   .top .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);
     border:1px solid rgba(255,255,255,.28);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:500}
@@ -69,7 +68,7 @@
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .kpi::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:var(--brand)}
   .kpi.k2::before{background:var(--green)} .kpi.k3::before{background:var(--amber)}
-  .kpi.k4::before{background:var(--sky)} .kpi.k5::before{background:var(--brand2)} .kpi.k6::before{background:var(--red)}
+  .kpi.k4::before{background:var(--red)} .kpi.k5::before{background:var(--brand2)} .kpi.k6::before{background:var(--sky)}
   .kpi .lbl{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px}
   .kpi .val{font-size:26px;font-weight:800;letter-spacing:-.5px}
   .kpi .sub{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.5}
@@ -99,8 +98,7 @@
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>מעקב פיננסי · דשבורד משפחתי</h1>
-      <p>הון, נזילות ותקציב — משותף, גיא ויעל · מתעדכן מ‑Google Sheets</p>
+      <h1>המעקב הפיננסי של בינגוס ותותי</h1>
     </div>
     <div class="right">
       <span class="badge"><span class="dot" id="statusDot"></span><span id="statusText">טוען…</span></span>
@@ -149,7 +147,7 @@
 
 <script>
 /* ============================================================
-   מעקב פיננסי — דשבורד משפחתי
+   המעקב הפיננסי של בינגוס ותותי — דשבורד משפחתי
    מקור נתונים: Google Sheets (עדכון חי) + גיבוי מוטמע
    ============================================================ */
 
@@ -164,7 +162,7 @@ function monthLabel(s){ const d=serialToDate(s); return HEB_M[d.getUTCMonth()]+"
 let MONTHS = [46022,46053,46081,46112,46142,46173,46203];
 
 /* ---------- נתונים מוטמעים (גיבוי / ברירת מחדל) ---------- */
-/* לכל אדם: sections לפי טווח, כל חשבון עם ערכים לכל חודש (בהתאמה ל-MONTHS) */
+/* לכל אדם: sections לפי טווח + התחייבויות, כל חשבון עם ערכים לכל חודש (בהתאמה ל-MONTHS) */
 const EMBEDDED = {
   guy:{
     short:[
@@ -182,6 +180,7 @@ const EMBEDDED = {
       {name:'קרן פנסיה - הראל',              v:[82799,84093,86220,85369,90817,94573,95452]},
       {name:'קרן השתלמות - הראל',            v:[73,74,75,72,75,77,76]},
     ],
+    liab:[],
   },
   yael:{
     short:[
@@ -201,6 +200,7 @@ const EMBEDDED = {
       {name:'קרנות השתלמות - אלטשולר',       v:[21999,22144,21951,20996,22542,23563,23563]},
       {name:'קרנות גמל - אלטשולר',           v:[43119,43421,43050,41176,44216,46228,46228]},
     ],
+    liab:[],
   },
 };
 
@@ -229,18 +229,16 @@ const nis = n => '₪' + Math.round(n).toLocaleString('he-IL');
 const pct = n => (n*100).toFixed(1).replace('.',',') + '%';
 
 function rangeTotals(person, idx){
-  const sum = arr => arr.reduce((a,r)=>a+(r.v[idx]||0),0);
+  const sum = arr => (arr||[]).reduce((a,r)=>a+(r.v[idx]||0),0);
   const s = sum(DATA[person].short), m = sum(DATA[person].medium), l = sum(DATA[person].long);
-  return {short:s, medium:m, long:l, liquid:s+m, nonLiquid:l, total:s+m+l};
-}
-// סדרת ההון הכולל לאורך כל החודשים
-function equitySeries(person){
-  return MONTHS.map((_,i)=>rangeTotals(person,i).total);
+  const liab = sum(DATA[person].liab);
+  const assets = s+m+l;
+  return {short:s, medium:m, long:l, liab:liab, liquid:s+m, nonLiquid:l, assets:assets, total:assets-liab};
 }
 function combinedTotals(idx){
   const g=rangeTotals('guy',idx), y=rangeTotals('yael',idx);
-  const add=(a,b)=>({short:a.short+b.short,medium:a.medium+b.medium,long:a.long+b.long,
-                     liquid:a.liquid+b.liquid,nonLiquid:a.nonLiquid+b.nonLiquid,total:a.total+b.total});
+  const add=(a,b)=>({short:a.short+b.short,medium:a.medium+b.medium,long:a.long+b.long,liab:a.liab+b.liab,
+                     liquid:a.liquid+b.liquid,nonLiquid:a.nonLiquid+b.nonLiquid,assets:a.assets+b.assets,total:a.total+b.total});
   return add(g,y);
 }
 function totalsFor(view, idx){
@@ -248,7 +246,7 @@ function totalsFor(view, idx){
 }
 function seriesFor(view){
   if(view==='shared') return MONTHS.map((_,i)=>combinedTotals(i).total);
-  return equitySeries(view);
+  return MONTHS.map((_,i)=>rangeTotals(view,i).total);
 }
 
 /* ---------- רינדור KPIs ---------- */
@@ -271,11 +269,11 @@ function renderKPIs(){
      sub:`שיעור נזילות: ${pct(liq)}`},
     {c:'k3', lbl:'הון לא נזיל', val:nis(t.nonLiquid),
      sub:`פנסיה, גמל והשתלמות`},
-    {c:'k4', lbl:'שיעור נזילות', val:pct(liq),
-     sub:`נזיל מתוך סך ההון`},
+    {c:'k4', lbl:'התחייבויות', val:nis(t.liab),
+     sub:`הלוואות והתחייבויות אחרות`},
     {c:'k5', lbl:'שינוי חודשי ממוצע', val:nis(avgMonthly),
      sub:`על פני ${selIdx} חודשים`},
-    {c:'k6', lbl:'חודשי כיסוי חירום', val:emergency.toFixed(1).replace('.',',')+' ח׳',
+    {c:'k6', lbl:'חודשי כיסוי חירום', val:emergency.toFixed(1).replace('.',',')+' חודשים',
      sub:`טווח קצר: ${nis(t.short)} · הוצאה: ${nis(expense)}`},
   ];
   document.getElementById('kpis').innerHTML = cards.map(k=>`
@@ -286,11 +284,12 @@ function renderKPIs(){
     </div>`).join('');
 }
 
-/* ---------- רינדור טבלאות תקציב (משותף) ---------- */
+/* ---------- רינדור טבלאות תקציב (משותף) — ממוין לפי גודל בכל באקט ---------- */
 function renderBudget(){
   document.getElementById('budgetSection').innerHTML = BUDGET.slice(0,4).map(tbl=>{
     const total = tbl.rows.reduce((a,r)=>a+r[1],0);
-    const body = tbl.rows.map(r=>`
+    const sorted = tbl.rows.slice().sort((a,b)=>b[1]-a[1]); // מיון יורד לפי סכום
+    const body = sorted.map(r=>`
       <tr><td>${r[0]}</td>
           <td class="num">${nis(r[1])}</td>
           <td class="pct">${pct(total?r[1]/total:0)}</td></tr>`).join('');
@@ -309,7 +308,7 @@ function renderBudget(){
 let growthChart=null, distChart=null;
 function renderCharts(){
   const person = currentView;
-  const series = equitySeries(person);
+  const series = MONTHS.map((_,i)=>rangeTotals(person,i).total);
   const labels = MONTHS.map(monthLabel);
   const t = rangeTotals(person, selIdx);
 
@@ -346,9 +345,9 @@ function renderCharts(){
 function renderAccounts(){
   const person = currentView;
   const t = rangeTotals(person, selIdx);
-  const grand = t.total || 1;
+  const grand = t.assets || 1;
   const sectionRows = (title, arr, subtotal) => {
-    const rows = arr.map(r=>`<tr>
+    const rows = (arr||[]).map(r=>`<tr>
         <td>${r.name}</td>
         <td class="num">${nis(r.v[selIdx]||0)}</td>
         <td class="pct">${pct((r.v[selIdx]||0)/grand)}</td></tr>`).join('');
@@ -361,7 +360,6 @@ function renderAccounts(){
       ${sectionRows('נכסים - טווח קצר',   DATA[person].short,  t.short)}
       ${sectionRows('נכסים - טווח בינוני', DATA[person].medium, t.medium)}
       ${sectionRows('נכסים - טווח ארוך',   DATA[person].long,   t.long)}
-      <tr class="total"><td>סה"כ הון</td><td class="num">${nis(t.total)}</td><td class="pct">100,0%</td></tr>
     </tbody>`;
 }
 
@@ -449,7 +447,7 @@ function parsePerson(rows){
   const monthCols=detectMonthCols(rows[hr]);
   if(monthCols.length<2) throw new Error('no month cols');
   const months=monthCols.map(m=>m.serial);
-  const sections={short:[],medium:[],long:[]};
+  const sections={short:[],medium:[],long:[],liab:[]};
   let cur=null;
   for(let r=hr+1;r<rows.length;r++){
     const row=rows[r]; const name=String(row[nameCol]||'').trim();
@@ -457,17 +455,17 @@ function parsePerson(rows){
     if(name.includes('טווח קצר') && !name.includes('סה')){cur='short';continue;}
     if(name.includes('טווח בינוני') && !name.includes('סה')){cur='medium';continue;}
     if(name.includes('טווח ארוך') && !name.includes('סה')){cur='long';continue;}
+    if(name.includes('התחייבויות') && !name.includes('סה')){cur='liab';continue;}
     if(name.includes('סה"כ')||name.includes('שינוי')||name.includes('שיעור')||
-       name.includes('התחייבויות')||name.includes('חודש')||name.includes('סך')) continue;
+       name.includes('חודש')||name.includes('סך')) continue;
     if(!cur) continue;
     const v=monthCols.map(m=>num(row[m.idx]));
-    if(v.some(x=>x!==0)||true) sections[cur].push({name,v});
+    sections[cur].push({name,v});
   }
   if(!sections.short.length && !sections.long.length) throw new Error('empty');
   return {months,sections};
 }
 function parseBudget(rows){
-  // מזהה 4 בלוקים לפי כותרות
   const titles=['הכנסות','הוצאות - קבועות','הוצאות - משתנות','חיסכון/השקעה'];
   const out=[];
   const flat=rows.map(r=>r.map(c=>String(c).trim()));
@@ -480,19 +478,16 @@ function parseBudget(rows){
       const cells=flat[r];
       const joined=cells.join('');
       if(joined.includes('סה"כ')) break;
-      // חפש תא שם (טקסט עברי) + תא מספרי סמוך
       let nameIdx=cells.findIndex(c=>/[א-ת]/.test(c)&&!/^\d/.test(c)&&c.length>1);
       if(nameIdx<0) continue;
       const nm=cells[nameIdx];
       if(titles.includes(nm)) continue;
-      // הסכום = המספר הגדול הראשון אחרי השם
       let amt=0;
       for(let k=0;k<cells.length;k++){ const n=num(cells[k]); if(n>=1&&k!==nameIdx){amt=n;break;} }
       if(nm&&amt>0) block.rows.push([nm,amt]);
     }
     out.push(block.rows.length?block:null);
   }
-  // אם כל הבלוקים נמצאו — החזר, אחרת null
   return out.every(b=>b) ? out : null;
 }
 
@@ -508,16 +503,13 @@ async function loadLive(userTriggered){
   try{
     const [guyRows,yaelRows]=await Promise.all([fetchSheet('גיא'),fetchSheet('יעל')]);
     const guy=parsePerson(guyRows), yael=parsePerson(yaelRows);
-    // ודא שהחודשים תואמים
     DATA={guy:guy.sections, yael:yael.sections};
     MONTHS=guy.months;
     selIdx=MONTHS.length-1;
-    // תקציב (לא חוסם אם נכשל)
     try{ const bRows=await fetchSheet('תקציב משותף'); const b=parseBudget(bRows); if(b) BUDGET=b; }catch(_){}
     buildMonthSelect(); render();
     setStatus('live','עודכן מהגיליון · '+new Date().toLocaleTimeString('he-IL'));
   }catch(err){
-    // גיבוי — נתונים מוטמעים
     DATA=JSON.parse(JSON.stringify(EMBEDDED));
     BUDGET=JSON.parse(JSON.stringify(EMBEDDED_BUDGET));
     MONTHS=[46022,46053,46081,46112,46142,46173,46203];
