@@ -133,9 +133,9 @@ const TAB_GUY = "גיא", TAB_YAEL = "יעל", TAB_BUDGET = "תקציב משות
 const POLL_MS = 60000;
 
 /* ---------- עזרי תאריך ---------- */
-const HEB_M = ['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
+const HEB_M = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 function serialToDate(s){ return new Date(Date.UTC(1899,11,30) + s*86400000); }
-function serialLabel(s){ const d=serialToDate(s); return HEB_M[d.getUTCMonth()]+"׳ "+String(d.getUTCFullYear()).slice(2); }
+function serialLabel(s){ const d=serialToDate(s); return HEB_M[d.getUTCMonth()]+" "+d.getUTCFullYear(); }
 function parseSerial(raw){
   const s=String(raw).trim();
   const n=Number(s.replace(/,/g,''));
@@ -214,7 +214,7 @@ let selIdx = LABELS.length - 1;
 
 /* ---------- חישוב ---------- */
 const nis = n => '₪' + Math.round(n).toLocaleString('he-IL');
-const pct = n => (n*100).toFixed(1).replace('.',',') + '%';
+const pct = n => (n*100).toFixed(1) + '%';
 function householdExpense(){
   const t = name => (BUDGET.find(b=>b.title===name)||{rows:[]}).rows.reduce((a,r)=>a+r[1],0);
   return (t('הוצאות - קבועות') + t('הוצאות - משתנות')) || 15585;
@@ -262,7 +262,7 @@ function renderBudget(){
     const body=sorted.map(r=>`<tr><td>${r[0]}</td><td class="num">${nis(r[1])}</td><td class="pct">${pct(total?r[1]/total:0)}</td></tr>`).join('');
     return `<div class="panel"><h3>${tbl.title}</h3>
       <table><thead><tr><th>שם החשבון</th><th>סכום</th><th>אחוז</th></tr></thead>
-      <tbody>${body}<tr class="total"><td>סה"כ ${tbl.title}</td><td class="num">${nis(total)}</td><td class="pct">100,0%</td></tr></tbody></table></div>`;
+      <tbody>${body}<tr class="total"><td>סה"כ ${tbl.title}</td><td class="num">${nis(total)}</td><td class="pct">100.0%</td></tr></tbody></table></div>`;
   }).join('');
 }
 
@@ -398,7 +398,7 @@ function parseBudget(rows){
       const nameIdx=cells.findIndex(c=>/[א-ת]/.test(c)&&!/^\d/.test(c)&&c.length>1);
       if(nameIdx<0) continue;
       const nm=cells[nameIdx]; if(titles.includes(nm)) continue;
-      let amt=0; for(let k=0;k<cells.length;k++){ const n=num(cells[k]); if(n>=1&&k!==nameIdx){amt=n;break;} }
+      let amt=0; for(let k=0;k<cells.length;k++){ if(k===nameIdx) continue; const n=num(cells[k]); if(n>amt) amt=n; } // הסכום = המספר הגדול ביותר בשורה (מדלג על מס' שורה ועל אחוז)
       if(nm&&amt>0) block.rows.push([nm,amt]);
     }
     out.push(block.rows.length?block:null);
@@ -422,7 +422,16 @@ async function loadLive(userTriggered){
   try{
     const [guyRows,yaelRows]=await Promise.all([fetchSheet(TAB_GUY),fetchSheet(TAB_YAEL)]);
     const guy=parsePerson(guyRows), yael=parsePerson(yaelRows);
-    const n=Math.min(guy.labels.length,yael.labels.length);
+    // מס' העמודות המקסימלי המשותף (הכותרת מכילה חודשים עתידיים ריקים עד ~2030)
+    const maxCols=Math.min(guy.labels.length,yael.labels.length);
+    // אינדקס העמודה האחרונה שבה קיימים נתונים בפועל (מדלג על חודשים עתידיים ריקים)
+    const lastDataIndex=(sec)=>{let last=-1;
+      for(let i=0;i<maxCols;i++){let tot=0;
+        for(const k in sec) sec[k].forEach(a=>tot+=Math.abs(a.v[i]||0));
+        if(tot>0) last=i;}
+      return last;};
+    const last=Math.max(lastDataIndex(guy.sections),lastDataIndex(yael.sections));
+    const n=(last>=0?last:maxCols-1)+1; // מספר החודשים לשמירה — עד החודש האחרון עם נתונים
     const clamp=sec=>{const o={};for(const k in sec)o[k]=sec[k].map(a=>({name:a.name,v:a.v.slice(0,n)}));return o;};
     DATA={guy:clamp(guy.sections),yael:clamp(yael.sections)};
     LABELS=guy.labels.slice(0,n);
